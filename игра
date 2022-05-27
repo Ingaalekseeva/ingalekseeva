@@ -1,0 +1,209 @@
+import time
+
+import pygame # Импорт библиотеки пайгейм
+import random # Импорт библиотеки рандом
+
+pygame.init() # Инициализация пайгейма
+
+pygame.display.set_caption("Ninja: The torch thief")
+pygame.display.set_icon(pygame.image.load('materials/ninja.bmp'))
+width,height = 1020,720 # Ширина и высота
+menufont = pygame.font.Font('materials/menu.ttf', 35) # Шрифт меню
+
+c1 = random.randint(125, 185) # Рандомный цвет
+startl = (169, 169, 169) # Цвет кнопок в меню
+startd = (100, 100, 100) # Цвет кнопок в меню затемненные
+white = (255, 255, 255) # Цвет
+lead_x = 40 # Позиция игрока по координате X
+lead_y = height / 2 # Позиция игрока по координате Y
+
+screen = pygame.display.set_mode((width, height)) # Основной экран, его размер
+clock = pygame.time.Clock() # Счетчик для ограничения кадров
+
+def intro(colox_c1, colox_c2): # Меню
+    pygame.mixer.music.load('materials/music/OST_Ninja_The_torch_thief_intro.mp3') # загрузка музыки
+    pygame.mixer.music.set_volume(0.3) # контроль громкости
+    pygame.mixer.music.play() # начало проигрывания
+    mirror = False
+    while True: # Основной цикл
+        for event in pygame.event.get(): # Проверка списка ивентов
+            if event.type == pygame.QUIT: # Если ивент закрытия программы
+                exit() # Завершения программы
+
+        if (0 <= colox_c1 <= 154 or 0 <= colox_c2 <= 154) and mirror == False: # переливающаяся надпись
+            colox_c1 += 2
+            colox_c2 += 2
+            if colox_c1 == 154:
+                mirror = True # Смена флага
+        if (0 <= colox_c1 <= 154 or 0 <= colox_c2 <= 154) and mirror == True: # переливающаяся надпись (в обратном направлении)
+            colox_c1 -= 2
+            colox_c2 -= 2
+            if colox_c1 == 0:
+                mirror = False # Смена флага
+
+        start_button = menufont.render('Старт', True, (colox_c1, colox_c2, c1)) # Надпись
+        exit_button = menufont.render('Выход', True, (c1, colox_c1, colox_c2)) # Надпись
+
+        screen.blit(pygame.image.load("materials/menu.png"),(0,0)) # Задник
+        mouse = pygame.mouse.get_pos() # Координаты мышки
+
+        screen.blit(pygame.transform.scale(pygame.image.load("materials/button 2.png"),(200,60)), # Кнопка старта при наведении(текстурка)
+                    (-10, 662))
+        screen.blit(pygame.transform.scale(pygame.image.load("materials/button 2.png"), (200, 60)), # Кнопка выхода при наведении(текстурка)
+                    (835, 662))
+
+        if 0 < mouse[0] < 180 and 662 < mouse[1] < 722: # Кнопка старта(текстурка)
+            screen.blit(pygame.transform.scale(pygame.image.load("materials/button 3.png"), (200, 60)),
+                        (-10, 662))
+        elif 845 < mouse[0] < 1025 and 662 < mouse[1] < 722: # Кнопка выхода(текстурка)
+            screen.blit(pygame.transform.scale(pygame.image.load("materials/button 3.png"), (200, 60)),
+                        (835, 662))
+
+        if event.type == pygame.MOUSEBUTTONDOWN: # Если кнопка нажата
+            if -10 < mouse[0] < 170 and 662 < mouse[1] < 722:
+                pygame.mixer.music.stop() # Остановка музыки
+                game(lead_y, lead_x) # Загрузка игры
+        if event.type == pygame.MOUSEBUTTONDOWN: # Если кнопка нажата
+            if 845 < mouse[0] < 1025 and 662 < mouse[1] < 722:
+                exit() # Выход
+
+        screen.blit(start_button, (45, 675)) # Отображение на экране
+        screen.blit(exit_button, (890, 675)) # Отображение на экране
+        pygame.display.update() # Обновление экрана
+        clock.tick(60)  # Ограничитель кадров
+
+def game(lead_y,lead_X):
+    pygame.mixer.music.load('materials/music/OST_Ninja_The_torch_thief.mp3') # загрузка музыки
+    pygame.mixer.music.set_volume(0.3) # контроль громкости
+    pygame.mixer.music.play(2) # начало проигрывания
+    speed = 0 # Скорость
+    count = 0
+    move_wall = 0 # Скорость стены
+    value = 0 # Счетчик для анимации
+    anim_list = [pygame.image.load("materials/player/frame 0.png"), pygame.image.load("materials/player/frame 1.png"),
+                 pygame.image.load("materials/player/frame 2.png"), pygame.image.load("materials/player/frame 3.png"),
+                 pygame.image.load("materials/player/frame 4.png")] # Хранение анимации в массиве
+    exit_button = pygame.image.load("materials/button_exit_1.png") # Кнопка выхода
+    exit_button_activ = pygame.image.load("materials/button_exit_2.png") # Кнопка выхода активна
+
+    torch_y, torch_x = random.randint(50, 680), width + 50  # Факела
+    window_y, window_x = random.randint(100, 620), width + 100  # Окна
+    while (torch_y - 100) <= window_y <= (torch_y + 100): # Проверка на правильность размещение
+        window_y = random.randint(100, 620) # Прегенирировать
+
+    while True: # Основной цикл
+        for ev in pygame.event.get(): # Проверка списка ивентов
+            if ev.type == pygame.QUIT: # Если ивент закрытия программы
+                exit() # Завершения программы
+        keys = pygame.key.get_pressed() # Запись нажатых кнопок
+        mouse = pygame.mouse.get_pos() # Запись позиции мышки
+        if keys[pygame.K_w]: # Если нажата кнопка W
+            lead_y -= (10 + speed) # Смещение на 10 пикселей
+        if keys[pygame.K_s]: # Если нажата кнопка S
+            lead_y += (10 + speed) # Смещение на 10 пикселей
+
+        if value >= len(anim_list): #проверка счетчика
+            value = 0 # Обнуление если будет перебор
+        anim = anim_list[value] # присвоение спрайта
+
+        if move_wall < -1020 + speed: # Движение стены
+            move_wall = 0 # Сброс
+        else:
+            move_wall -= (5+speed) # Смещение
+
+        if torch_x > -50 and torch_x <= width + 50: # Проверка находится ли за гранью текстура
+            torch_x -= (5 + speed) # Смещение текстуры
+        else:
+            torch_y, torch_x = random.randint(50, 680), width + 50  # Факела
+            while window_y - 50 <= torch_y <= window_y + 50: # Проверка на правильность размещение
+                torch_y = random.randint(50, 680) # Прегенирировать
+
+        if window_x > -100 and window_x <= width + 100: # Проверка находится ли за гранью текстура
+            window_x -= (5 + speed) # Смещение текстуры
+        else:
+            window_y, window_x = random.randint(100, 620), width + 100  # Окна
+            while torch_y - 100 <= window_y <= torch_y + 100: # Проверка на правильность размещение
+                window_y = random.randint(100, 620) # Прегенирировать
+
+        if lead_y - 50 <= window_y - 20 <= lead_y + 80 and lead_x - 50 <= window_x <= lead_x + 50: # Колизия окна
+            pygame.mixer.music.stop() # Остановка музыки
+            game_over(count)
+
+        if lead_x - 50 <= torch_x <= lead_x + 50 and lead_y + 100 >= torch_y >= lead_y - 40: # Колизия факела
+            torch_y, torch_x = random.randint(50, 680), width + 50  # Факела
+            while window_y - 50 <= torch_y <= window_y + 50:  # Проверка на правильность размещение
+                torch_y = random.randint(50, 680)  # Прегенирировать
+            count += 1 # Прибавление счета
+            speed += 0.5 # Прибавление скорости
+
+        if lead_y >= height - 90: # Ограничения уровня
+            lead_y = lead_y -(10 + speed) # Противодействия
+        if lead_y <= -15: # Ограничения уровня
+            lead_y = lead_y + (10 + speed) # Противодействия
+        if torch_x <= -50: # Условие проигрыша
+            pygame.mixer.music.stop() # Остановка музыки
+            game_over(count)
+
+        screen.blit(pygame.image.load("materials/wall.png"), (move_wall, 0))  # Задник
+        screen.blit(pygame.transform.scale(pygame.image.load("materials/torch.png"),(50,50)), (torch_x, torch_y)) # Текстура факела
+        screen.blit(pygame.transform.scale(pygame.image.load("materials/window.png"),(100,100)), (window_x, window_y)) #Текстура окна
+        screen.blit(pygame.transform.scale(anim, (100, 100)), (lead_x, lead_y))  # расположение спрайта игрока
+        value += 1  # увелечение счетчика анимации
+        if width - 100 < mouse[0] < width and 0 < mouse[1] < 40: # Проверка теретории кнопки
+            screen.blit(pygame.transform.scale(exit_button_activ,(50,50)),(width - 105, 0)) # Если мышка на теретории то показать спрайт
+        else:
+            screen.blit(pygame.transform.scale(exit_button, (50, 50)), (width - 105, 0)) # Если нет, то показать другой спрайт
+        if (width - 100 < mouse[0] < width and 0 < mouse[1] < 40) and (ev.type == pygame.MOUSEBUTTONDOWN): # Если на теретории и нажата
+            exit() # выйти
+
+        score = menufont.render('Счет:'+str(count), True, white) # рендер счета
+        screen.blit(score, (width - 160, height - 40)) # вывод счета на экран
+        pygame.display.update() # обновление кадра
+        clock.tick(60) # ограничение кадров
+
+def game_over(count):
+    pygame.mixer.music.load('materials/music/OST_Ninja_The_torch_thief_end.mp3') # загрузка музыки
+    pygame.mixer.music.set_volume(0.3) # контроль громкости
+    pygame.mixer.music.play() # начало проигрывания
+    while True:
+        for ev in pygame.event.get(): # Проверка списка ивентов
+            if ev.type == pygame.QUIT: # Если ивент закрытия программы
+                exit() # Завершения программы
+
+            if ev.type == pygame.MOUSEBUTTONDOWN: # Если кнопка нажата
+                if 80 < mouse[0] < 260 and height - 100 < mouse[1] < height - 40: # место нажатия
+                    exit() # Выход
+                elif width - 210 < mouse[0] < width - 30 and height - 100 < mouse[1] < height - 40: # место нажатия
+                    pygame.mixer.music.stop() # Остановка музыки
+                    game(lead_x, lead_y) # Загрузка игры заного
+
+        screen.blit(pygame.transform.scale(pygame.image.load("materials/end.jpg"),(1020,720)), (0, 0)) # Задник
+        game_over_font = pygame.font.Font('materials/menu.ttf', 60)  # Шрифт надписей
+        exit_font = pygame.font.Font('materials/menu.ttf', 35)  # Шрифт надписей
+        score = game_over_font.render('Финальный счет:' + str(count), True, white) # Счетчик
+        game_over = game_over_font.render('Конец игры', True, white) # Надпись Конец игры
+        game_exit = exit_font.render('выход', True, (0,0,139)) # Надпись выход
+        restart = exit_font.render('заново', True, (0,0,139)) # Надпись заново
+        mouse = pygame.mouse.get_pos() # Позиция мышки
+
+        if 80 < mouse[0] < 260 and height - 100 < mouse[1] < height - 40: # Територия срабатывания
+            screen.blit(pygame.transform.scale(pygame.image.load("materials/button 3.png"), (200, 60)),# Кнопка выхода при наведении(текстурка)
+                        (70, 620))
+        else:
+            screen.blit(pygame.transform.scale(pygame.image.load("materials/button 2.png"), (200, 60)),# Кнопка выхода (текстурка)
+                        (70, 620))
+
+        if width - 210 < mouse[0] < width - 30 and height - 100 < mouse[1] < height - 40: # Територия срабатывания
+            screen.blit(pygame.transform.scale(pygame.image.load("materials/button 3.png"), (200, 60)),# Кнопка рестарта при наведении(текстурка)
+                        (800, 620))
+        else:
+            screen.blit(pygame.transform.scale(pygame.image.load("materials/button 2.png"), (200, 60)),# Кнопка рестарта (текстурка)
+                        (800, 620))
+
+        screen.blit(game_exit, (125, 630)) # Вывод надписи выход
+        screen.blit(restart, (845, 630)) # Вывод надписи заново
+        screen.blit(game_over, (width / 2 - 130, 295)) # Вывод надписи конец игры
+        screen.blit(score, (width / 2 - 230, height / 2)) # Вывод надписи счета
+        pygame.display.update() # Обновление кадра
+        clock.tick(60) # Ограничение кадров
+intro(0,0) # Запуск
